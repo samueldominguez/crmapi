@@ -35,11 +35,15 @@ def create_app(test_config=None):
         return repr(db_session.query(User).one())
 
     @app.route('/customer/add', methods=['POST'])
-    def user_add():
+    def customer_add():
         db_session.add(Customer(1, request.args.get('name'), request.args.get(
             'surname'), 'https://img.google.com/ahsdy7YF7'))
         db_session.commit()
         return 'OK'
+
+    @app.route('/customer/get/<int:id>')
+    def customer_get(id):
+        return repr(db_session.query(Customer).filter_by(id=id).one())
 
     @app.route('/customer/list')
     def user_list():

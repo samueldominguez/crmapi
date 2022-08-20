@@ -1,4 +1,3 @@
-from weakref import ref
 from sqlalchemy import Column, ForeignKey, Integer, String, Boolean
 from sqlalchemy.orm import relationship
 from app.db import Base
@@ -45,4 +44,4 @@ class Customer(Base):
         self.photoURL = photoURL
 
     def __repr__(self):
-        return "{}: name: {} surname: {} photoURL: {} creator: {} updated by: {}".format(self.name, self.surname, self.photoURL, self.created_by, self.last_updated_by)
+        return "{}: name: {} surname: {} photoURL: {} creator: {} updated by: {}".format(self.id, self.name, self.surname, self.photoURL, self.created_by_id, self.last_updated_by_id)
