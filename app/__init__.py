@@ -1,16 +1,38 @@
 import os
 from flask import Flask, request
 from app.models import User, Customer
+from logging.config import dictConfig
+import logging
 
 
 def create_app(test_config=None):
+    dictConfig({
+        'version': 1,
+        'formatters': {'default': {
+            'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+        }},
+        'handlers': {'wsgi': {
+            'class': 'logging.StreamHandler',
+            'stream': 'ext://flask.logging.wsgi_errors_stream',
+            'formatter': 'default'
+        },
+            'filehandler': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'default',
+            'filename': 'logs/app.log',
+            'backupCount': 5
+        }},
+        'root': {
+            'level': 'INFO',
+            'handlers': ['wsgi', 'filehandler']
+        }
+    })
     # TODO: set instance path via module+relative?
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'app.sqlite')
     )
-
     if test_config is None:
         app.config.from_pyfile('config.py', silent=True)
     else:
@@ -26,27 +48,53 @@ def create_app(test_config=None):
     from app.db import db_session
     db.init_app(app)
 
-    @app.route('/hello')
+    @ app.route('/customers', methods=['POST'])
+    def customer_add():
+        pass
+
+    @ app.route('/customers/<int:id>', methods=['PUT'])
+    def customer_update(id):
+        pass
+
+    @ app.route('/customers/<int:id>', methods=['DELETE'])
+    def customer_delete(id):
+        pass
+
+    @ app.route('/customers/<int:id>')
+    def customer_get(id):
+        pass
+
+    @ app.route('/customers')
+    def customer_list():
+        pass
+
+    @ app.route('/users', methods=['POST'])
+    def user_add():
+        pass
+
+    @ app.route('/users/<int:id>', methods=['PUT'])
+    def user_update(id):
+        pass
+
+    @ app.route('/users/<int:id>', methods=['DELETE'])
+    def user_delete(id):
+        pass
+
+    @ app.route('/users/<int:id>')
+    def user_get(id):
+        pass
+
+    @ app.route('/users')
+    def user_list():
+        pass
+
+    @ app.route('/')
+    def root():
+        logging.info('root handler called')
+        return '<h1>CRM API</h1><p>Welcome to the CRM API</p>'
+
+    @ app.route('/hello')
     def hello():
         return 'Hello, flask!'
-
-    @app.route('/admins')
-    def list_admins():
-        return repr(db_session.query(User).one())
-
-    @app.route('/customer/add', methods=['POST'])
-    def customer_add():
-        db_session.add(Customer(1, request.args.get('name'), request.args.get(
-            'surname'), 'https://img.google.com/ahsdy7YF7'))
-        db_session.commit()
-        return 'OK'
-
-    @app.route('/customer/get/<int:id>')
-    def customer_get(id):
-        return repr(db_session.query(Customer).filter_by(id=id).one())
-
-    @app.route('/customer/list')
-    def user_list():
-        return repr(db_session.query(Customer).one())
 
     return app
