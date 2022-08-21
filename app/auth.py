@@ -27,7 +27,7 @@ def verify_password(user, password):
 def verify_token(token):
     try:
         payload = jwt.decode(token, 'secret', algorithms=['HS256'])
-        # check user in session is equal to payload's
+        return db_session.query(User).filter(User.id == payload['user_id']).first()
     except:
         return False
 
