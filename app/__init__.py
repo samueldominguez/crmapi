@@ -1,11 +1,13 @@
-import os
 from flask import Flask, request
+
 from app.models import User, Customer
 from logging.config import dictConfig
 import logging
+import os
 
 
 def create_app(test_config=None):
+    # Set up logging handlers, one for stderr and a rotating one to file
     dictConfig({
         'version': 1,
         'formatters': {'default': {
@@ -20,14 +22,15 @@ def create_app(test_config=None):
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'default',
             'filename': 'logs/app.log',
-            'backupCount': 5
+            'backupCount': 5,
+            'maxBytes': 1_000_000
         }},
         'root': {
             'level': 'INFO',
             'handlers': ['wsgi', 'filehandler']
         }
     })
-    # TODO: set instance path via module+relative?
+
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY='dev',
@@ -47,6 +50,9 @@ def create_app(test_config=None):
     import app.db as db
     from app.db import db_session
     db.init_app(app)
+
+    # Authentication
+    token_auth = HTTPTokenAuth()
 
     @ app.route('/customers', methods=['POST'])
     def customer_add():

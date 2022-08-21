@@ -1,6 +1,10 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, Boolean
 from sqlalchemy.orm import relationship
 from app.db import Base
+import secrets
+from argon2 import PasswordHasher
+
+ph = PasswordHasher()
 
 
 class User(Base):
@@ -10,14 +14,16 @@ class User(Base):
     name = Column(String(50))
     surname = Column(String(50))
     administrator = Column(Boolean(), default=False)
-    refresh_token = Column(String(100), default="")
+    salt = Column(String(43))
+    password_hash = Column(String(16))
 
-    def __init__(self, user_name, name='', surname='', administrator=False, refresh_token=''):
+    def __init__(self, user_name, password, name='', surname='', administrator=False):
         self.user_name = user_name
         self.name = name
         self.surname = surname
         self.administrator = administrator
-        self.refresh_token = refresh_token
+        self.salt = secrets.token_urlsafe()
+        self.password_hash = ph.hash(self.salt + password)
 
     def __repr__(self):
         return "{}: name: {} surname: {} administator: {} len(refresh_token): {}".format(self.user_name, self.name, self.surname, self.administrator, len(self.refresh_token))
