@@ -17,8 +17,10 @@ def init_db():
     Base.metadata.create_all(bind=engine)
     # Create first administrator, does not need
     # oauth2 sign in flow
-    db_session.add(app.models.User(user_name='Marduk',
-                                   name='Marduk', surname='', administrator=True))
+    db_session.add(app.models.User('marduk', 'universe',
+                                   name='Marduk', surname='Babylonian', administrator=True))
+    db_session.add(app.models.User('human', 'earth',
+                                   name='Human', surname='Earthling', administrator=False))
     db_session.commit()
 
 

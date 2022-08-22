@@ -1,5 +1,4 @@
-from flask import Flask, request
-
+from flask import Flask, Response, request, jsonify
 from app.models import User, Customer
 from logging.config import dictConfig
 import logging
@@ -52,45 +51,63 @@ def create_app(test_config=None):
     db.init_app(app)
 
     # Authentication
-    token_auth = HTTPTokenAuth()
+    from app.auth import token_auth, auth_bp, admin_only
+
+    app.register_blueprint(auth_bp)
 
     @ app.route('/customers', methods=['POST'])
+    @token_auth.login_required
     def customer_add():
-        pass
+        return jsonify({'user_name': token_auth.current_user().user_name})
 
     @ app.route('/customers/<int:id>', methods=['PUT'])
+    @token_auth.login_required
     def customer_update(id):
         pass
 
     @ app.route('/customers/<int:id>', methods=['DELETE'])
+    @token_auth.login_required
     def customer_delete(id):
         pass
 
     @ app.route('/customers/<int:id>')
+    @token_auth.login_required
     def customer_get(id):
         pass
 
     @ app.route('/customers')
+    @token_auth.login_required
     def customer_list():
         pass
 
     @ app.route('/users', methods=['POST'])
+    @token_auth.login_required
+    @admin_only
     def user_add():
-        pass
+        user = token_auth.current_user()
+        return 'cool, u are an admin'
 
     @ app.route('/users/<int:id>', methods=['PUT'])
+    @token_auth.login_required
+    @admin_only
     def user_update(id):
         pass
 
     @ app.route('/users/<int:id>', methods=['DELETE'])
+    @token_auth.login_required
+    @admin_only
     def user_delete(id):
         pass
 
     @ app.route('/users/<int:id>')
+    @token_auth.login_required
+    @admin_only
     def user_get(id):
         pass
 
     @ app.route('/users')
+    @token_auth.login_required
+    @admin_only
     def user_list():
         pass
 
@@ -98,9 +115,5 @@ def create_app(test_config=None):
     def root():
         logging.info('root handler called')
         return '<h1>CRM API</h1><p>Welcome to the CRM API</p>'
-
-    @ app.route('/hello')
-    def hello():
-        return 'Hello, flask!'
 
     return app

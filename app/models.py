@@ -25,9 +25,6 @@ class User(Base):
         self.salt = secrets.token_urlsafe()
         self.password_hash = ph.hash(self.salt + password)
 
-    def __repr__(self):
-        return "{}: name: {} surname: {} administator: {} len(refresh_token): {}".format(self.user_name, self.name, self.surname, self.administrator, len(self.refresh_token))
-
 
 class Customer(Base):
     __tablename__ = 'customer'
@@ -49,5 +46,5 @@ class Customer(Base):
         self.surname = surname
         self.photoURL = photoURL
 
-    def __repr__(self):
-        return "{}: name: {} surname: {} photoURL: {} creator: {} updated by: {}".format(self.id, self.name, self.surname, self.photoURL, self.created_by_id, self.last_updated_by_id)
+    # def __repr__(self):
+    #     return "{}: name: {} surname: {} photoURL: {} creator: {} updated by: {}".format(self.id, self.name, self.surname, self.photoURL, self.created_by_id, self.last_updated_by_id)
