@@ -45,6 +45,3 @@ class Customer(Base):
         self.name = name
         self.surname = surname
         self.photoURL = photoURL
-
-    # def __repr__(self):
-    #     return "{}: name: {} surname: {} photoURL: {} creator: {} updated by: {}".format(self.id, self.name, self.surname, self.photoURL, self.created_by_id, self.last_updated_by_id)
