@@ -1,5 +1,4 @@
-from flask import Flask, Response, request, jsonify
-from app.models import User, Customer
+from flask import Flask
 from logging.config import dictConfig
 import logging
 import os
@@ -47,72 +46,22 @@ def create_app(test_config=None):
 
     # Initialize database
     import app.db as db
-    from app.db import db_session
     db.init_app(app)
 
-    # Marshmallow schemas for deserialization
-    from app.schema import user_schema, customer_schema
+    # v1 api prefix
+    v1_prefix = '/api/v1/'
 
     # Authentication
     from app.auth import token_auth, auth_bp, authorize_roles
 
-    app.register_blueprint(auth_bp)
+    app.register_blueprint(auth_bp, url_prefix=v1_prefix + 'auth/')
 
-    @ app.route('/customers', methods=['POST'])
-    @token_auth.login_required
-    def customer_add():
-        return jsonify({'user_name': token_auth.current_user().user_name})
+    # Application routes
+    from app.user import user_bp
+    from app.customer import customer_bp
 
-    @ app.route('/customers/<int:id>', methods=['PUT'])
-    @token_auth.login_required
-    def customer_update(id):
-        pass
-
-    @ app.route('/customers/<int:id>', methods=['DELETE'])
-    @token_auth.login_required
-    def customer_delete(id):
-        pass
-
-    @ app.route('/customers/<int:id>')
-    @token_auth.login_required
-    def customer_get(id):
-        return customer_schema(db_session.query(Customer).filter(Customer.id == id).first())
-
-    @ app.route('/customers')
-    @token_auth.login_required
-    def customer_list():
-        pass
-
-    @ app.route('/users', methods=['POST'])
-    @token_auth.login_required
-    @authorize_roles(['admin'])
-    def user_add():
-        user = token_auth.current_user()
-        return 'cool, u are an admin'
-
-    @ app.route('/users/<int:id>', methods=['PUT'])
-    @token_auth.login_required
-    @authorize_roles(['admin'])
-    def user_update(id):
-        pass
-
-    @ app.route('/users/<int:id>', methods=['DELETE'])
-    @token_auth.login_required
-    @authorize_roles(['admin'])
-    def user_delete(id):
-        pass
-
-    @ app.route('/users/<int:id>')
-    @token_auth.login_required
-    @authorize_roles(['admin'])
-    def user_get(id):
-        return jsonify(user_schema.dump(db_session.query(User).filter(User.id == id).first()))
-
-    @ app.route('/users')
-    @token_auth.login_required
-    @authorize_roles(['admin'])
-    def user_list():
-        pass
+    app.register_blueprint(user_bp, url_prefix=v1_prefix)
+    app.register_blueprint(customer_bp, url_prefix=v1_prefix)
 
     @ app.route('/')
     def root():
