@@ -15,12 +15,16 @@ Base.query = db_session.query_property()
 def init_db():
     import app.models
     Base.metadata.create_all(bind=engine)
-    # Create first administrator, does not need
-    # oauth2 sign in flow
-    db_session.add(app.models.User('marduk', 'universe',
-                                   name='Marduk', surname='Babylonian', administrator=True))
-    db_session.add(app.models.User('human', 'earth',
-                                   name='Human', surname='Earthling', administrator=False))
+    # Create roles
+    admin_role = app.models.Role('admin')
+    wizard_role = app.models.Role('wizard')
+    # Create first admin, and a normal user
+    marduk = app.models.User('marduk', 'universe',
+                             name='Marduk', surname='Babylonian', administrator=True, roles=[admin_role, wizard_role])
+    human = app.models.User('human', 'earth',
+                            name='Human', surname='Earthling', administrator=False, roles=[wizard_role])
+    db_session.add(marduk)
+    db_session.add(human)
     db_session.commit()
 
 

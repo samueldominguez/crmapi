@@ -21,7 +21,9 @@ ph = PasswordHasher()
 def verify_password(user, password):
     """Verify password against database hashes"""
     u = db_session.query(User).filter(User.user_name == user).first()
-    if ph.verify(u.password_hash, u.salt + password):
+    if u is None:
+        return None
+    elif ph.verify(u.password_hash, u.salt + password):
         return u
 
 
@@ -35,15 +37,21 @@ def verify_token(token):
         return False
 
 
-def admin_only(func):
-    """Decorator to only allow certain endpoints to be accessed by admin users"""
-    @wraps(func)
-    def admin_decorator(*args, **kwargs):
-        if token_auth.current_user().administrator:
-            return func(*args, **kwargs)
-        else:
+def authorize_roles(roles):
+    """
+    Takes in an array of roles, and checks whether the current user
+    has any of those roles
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            user_roles = [r.name for r in token_auth.current_user().roles]
+            for r in roles:
+                if r in user_roles:
+                    return func(*args, **kwargs)
             return Response(response='Unauthorized', status=401)
-    return admin_decorator
+        return wrapper
+    return decorator
 
 
 @auth_bp.route('/tokens', methods=['POST'])
