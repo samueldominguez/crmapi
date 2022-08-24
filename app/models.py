@@ -27,8 +27,11 @@ class User(Base):
         self.name = name
         self.surname = surname
         self.salt = secrets.token_urlsafe()
-        self.password_hash = ph.hash(self.salt + password)
+        self.set_password(password)
         self.roles = roles
+
+    def set_password(self, password):
+        self.password_hash = ph.hash(self.salt + password)
 
 
 class Customer(Base):
@@ -44,7 +47,7 @@ class Customer(Base):
     last_updated_by = relationship(
         'User', foreign_keys=[last_updated_by_id])
 
-    def __init__(self, created_by_id, name='', surname='', photoURL=''):
+    def __init__(self, created_by_id, name, surname, photoURL):
         self.created_by_id = created_by_id
         self.last_updated_by_id = created_by_id
         self.name = name

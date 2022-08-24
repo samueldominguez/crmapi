@@ -39,6 +39,8 @@ def verify_token(token):
 
 def authorize_roles(roles):
     """
+    Decorator function
+    ==================
     Takes in an array of roles, and checks whether the current user
     has any of those roles
     """

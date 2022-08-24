@@ -29,10 +29,16 @@ def create_app(test_config=None):
         }
     })
 
-    app = Flask(__name__, instance_relative_config=True)
+    app = Flask(__name__, instance_relative_config=True,
+                static_folder='../static')
     app.config.from_mapping(
         SECRET_KEY='dev',
-        DATABASE=os.path.join(app.instance_path, 'app.sqlite')
+        DATABASE=os.path.join(app.instance_path, 'app.sqlite'),
+        PREFERRED_URL_SCHEME='http',
+        SERVER_NAME='127.0.0.1:5000',
+        IMG_UPLOAD_FOLDER_RELATIVE_STATIC='images',
+        IMG_UPLOAD_FOLDER=os.path.join(app.static_folder, 'images'),
+        ALLOWED_EXTENSIONS={'png', 'jpg', 'jpeg'}
     )
     if test_config is None:
         app.config.from_pyfile('config.py', silent=True)
@@ -52,7 +58,7 @@ def create_app(test_config=None):
     v1_prefix = '/api/v1/'
 
     # Authentication
-    from app.auth import token_auth, auth_bp, authorize_roles
+    from app.auth import auth_bp
 
     app.register_blueprint(auth_bp, url_prefix=v1_prefix + 'auth/')
 
