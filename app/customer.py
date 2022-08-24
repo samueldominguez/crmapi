@@ -3,7 +3,8 @@ from flask import (
     jsonify,
     request,
     current_app,
-    url_for
+    url_for,
+    Response
 )
 from app.auth import (
     token_auth
@@ -92,6 +93,7 @@ def customer_update(id):
     # Get the customer to update
     customer = db_session.query(Customer).filter(Customer.id == id).first()
 
+    customer.last_updated_by_id = last_updated_by_id
     if not customer:
         return bad_req_handler("user with id {} does not exist".format(id))
 
@@ -105,22 +107,42 @@ def customer_update(id):
             return bad_req_handler(err)
         else:
             customer.photoURL = photoURL
+    db_session.commit()
     return jsonify(customer_schema.dump(customer)), 200
 
 
 @customer_bp.route('/customers/<int:id>', methods=['DELETE'])
 @token_auth.login_required
 def customer_delete(id):
-    pass
+    customer = db_session.query(Customer).filter(Customer.id == id).first()
+    if not customer:
+        return bad_req_handler('customer with id {} does not exist'.format(id))
+    db_session.delete(customer)
+    db_session.commit()
+    return Response(None, status=204)
 
 
 @customer_bp.route('/customers/<int:id>')
 @token_auth.login_required
 def customer_get(id):
-    return customer_schema(db_session.query(Customer).filter(Customer.id == id).first())
+    customer = db_session.query(Customer).filter(Customer.id == id).first()
+    if not customer:
+        return bad_req_handler('customer with id {} does not exist'.format(id))
+    return jsonify(customer_schema.dump(customer))
 
 
 @customer_bp.route('/customers')
 @token_auth.login_required
 def customer_list():
-    pass
+    try:
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 100))
+    except ValueError:
+        return bad_req_handler("please provide integers for 'page' and 'per_page'")
+    total_customers = db_session.query(Customer).count()
+    users = db_session.query(Customer).offset(
+        (page-1)*per_page).limit(per_page).all()
+    r = jsonify(list(map(lambda x: customer_schema.dump(x), users)))
+    r = fill_response_with_pagination_headers(
+        r, page, per_page, total_customers, 'customer.customer_list', request.args)
+    return r

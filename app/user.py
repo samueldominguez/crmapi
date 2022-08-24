@@ -100,6 +100,7 @@ def user_update(id):
         user.surname = surname
     if roles:
         user.roles = roles
+    db_session.commit()
     return jsonify(user_schema.dump(user)), 200
 
 
