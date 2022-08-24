@@ -38,7 +38,8 @@ def create_app(test_config=None):
         SERVER_NAME='127.0.0.1:5000',
         IMG_UPLOAD_FOLDER_RELATIVE_STATIC='images',
         IMG_UPLOAD_FOLDER=os.path.join(app.static_folder, 'images'),
-        ALLOWED_EXTENSIONS={'png', 'jpg', 'jpeg'}
+        ALLOWED_EXTENSIONS={'png', 'jpg', 'jpeg'},
+        JSON_SORT_KEYS=False
     )
     if test_config is None:
         app.config.from_pyfile('config.py', silent=True)
