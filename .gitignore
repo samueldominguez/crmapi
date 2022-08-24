@@ -1,4 +1,6 @@
 __pycache__/
 instance/*
+static/images/*
 !**/.keep
 **/*.log
+
