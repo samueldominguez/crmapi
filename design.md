@@ -46,7 +46,21 @@ The following table illustrates the `Role` object:
 # Endpoints
 ## Authentication
 ### POST /api/v1/tokens
-blah
+#### **Authentication**
+Basic auth with `user_name` and `password` specified during user creation
+#### **Parameters**
+None.
+#### **Returns**
+- `expires_at` datetime in UTC, iso format, specifies when token expires
+- `token` the token to use for authentication in all other endpoints
+
+e.g.:
+```json
+{
+    "expires_at": "2022-08-25T16:18:44.228848+00:00",
+    "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2NjE0MjMzNzcsInVzZXJfaWQiOjJ9.xi_9gYELYE8SgO4qvS_IKZEPB4K1LtYf5Y-i0J8oQ8M"
+}
+```
 ## User
 ### POST /api/v1/users
 blah
@@ -54,6 +68,12 @@ blah
 ### POST /api/v1/customers
 blah
 # Other design details
+## Token format
+The token received after a successful basic auth is a JWT. The payload of this token contains:
+1. expiry time
+2. user ID
+
+By keeping this data in the token itself, after successful decoding, we can verify the user exists and their role by performing a database lookup, to check whether the endpoint is authorised for them, effectively acting as a kind of session. The user role could be embedded in the JWT, however this means any role updates between token generation and its expiry would not take effect, unless the database was queried to verify it, which would defeat the point of encoding it in the token. Expiry time however, will not change, and therefore can be put in the token itself, which saves having to store it and an additional JOIN.
 ## Keeping profile pictures "safe"
 Profile pictures are not protected behind any authentication or authorization. They are served when requested by anybody. However, the file names of uploaded images are always replaced by a random 64 byte string, which in effect makes it a sort of password. The only privacy concern would come from a user sharing the URL of any of these pictures. Once someone is in posession of an image URL, they will always have access to them, but this shouldn't be a major privacy concern.
 ## Preventing SQL injections and XSS attacks
