@@ -1,3 +1,26 @@
+# Table of contents
+- [Table of contents](#table-of-contents)
+- [Tech stack choices](#tech-stack-choices)
+- [Data Model](#data-model)
+  - [User <a name="dmuser"></a>](#user-)
+  - [Customer](#customer)
+  - [Role](#role)
+- [Endpoints](#endpoints)
+  - [Authentication](#authentication)
+    - [POST /api/v1/tokens](#post-apiv1tokens)
+      - [**Authentication**](#authentication-1)
+      - [**Parameters**](#parameters)
+      - [**Returns**](#returns)
+  - [User <a name="epuser"></a>](#user--1)
+    - [POST /api/v1/users](#post-apiv1users)
+  - [Customer <a name="epcustomer"></a>](#customer-)
+    - [POST /api/v1/customers](#post-apiv1customers)
+- [Other design details](#other-design-details)
+  - [Token format](#token-format)
+  - [Keeping profile pictures "safe"](#keeping-profile-pictures-safe)
+  - [Preventing SQL injections and XSS attacks](#preventing-sql-injections-and-xss-attacks)
+  - [Pagination on resource lists](#pagination-on-resource-lists)
+
 # Tech stack choices
 - *Python* - great library/framework ecosystem for the backend, development speed usually quite fast 
 - *Flask* - web microframework, not as many features as Django, but suffices for a REST API
@@ -10,7 +33,7 @@
 
 # Data Model
 The different objects managed by the API at the user level, not at the implementation level.
-## User
+## User <a name="dmuser"></a>
 Represents each user's information. Users can create, read, update and delete customers. Users also can have a variety of roles. Among them, `admin` is the most important. Users with the `admin` role can create, read, update and delete **users**. The following table illustrates the `User` object:
 | Property  | Description                | Required                                                  |
 | --------- | -------------------------- | --------------------------------------------------------- |
@@ -61,10 +84,10 @@ e.g.:
     "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2NjE0MjMzNzcsInVzZXJfaWQiOjJ9.xi_9gYELYE8SgO4qvS_IKZEPB4K1LtYf5Y-i0J8oQ8M"
 }
 ```
-## User
+## User <a name="epuser"></a>
 ### POST /api/v1/users
 blah
-## Customer
+## Customer <a name="epcustomer"></a>
 ### POST /api/v1/customers
 blah
 # Other design details
