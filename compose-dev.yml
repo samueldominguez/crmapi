@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  crmapi:
+    restart: always
+    build:
+      context: .
+      target: "dev"
+    ports:
+      - 5000:5000
+      - 5678:5678
+    entrypoint:
+      [
+        "python",
+        "-m",
+        "debugpy",
+        "--listen",
+        "0.0.0.0:5678",
+        "-m",
+        "run",
+        "--wait-for-client"
+      ]
+    volumes:
+      - ./data/app.sqlite:/var/www/crmapi/data/app.sqlite
+      - ./static:/var/www/crmapi/static
+      - ./app:/var/www/crmapi/app

@@ -10,6 +10,7 @@ import jwt
 from app.db import db_session
 from app.models import User
 from datetime import datetime, timedelta, timezone
+import logging
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 basic_auth = HTTPBasicAuth()
@@ -67,6 +68,7 @@ def token_get():
         'user_id': basic_auth.current_user().id
     }
     token = jwt.encode(payload, 'secret')
+    logging.info('')
     return jsonify({
         'token': token,
         'expires_at': expiry.isoformat()

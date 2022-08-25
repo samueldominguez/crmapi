@@ -2,6 +2,7 @@ from flask import Flask
 from logging.config import dictConfig
 import logging
 import os
+import bleach
 
 
 def create_app(test_config=None):
@@ -28,28 +29,29 @@ def create_app(test_config=None):
             'handlers': ['wsgi', 'filehandler']
         }
     })
-
-    app = Flask(__name__, instance_relative_config=True,
+    app = Flask(__name__,
                 static_folder='../static')
-    app.config.from_mapping(
-        SECRET_KEY='dev',
-        DATABASE=os.path.join(app.instance_path, 'app.sqlite'),
-        PREFERRED_URL_SCHEME='http',
-        SERVER_NAME='127.0.0.1:5000',
-        IMG_UPLOAD_FOLDER_RELATIVE_STATIC='images',
-        IMG_UPLOAD_FOLDER=os.path.join(app.static_folder, 'images'),
-        ALLOWED_EXTENSIONS={'png', 'jpg', 'jpeg'},
-        JSON_SORT_KEYS=False
-    )
-    if test_config is None:
-        app.config.from_pyfile('config.py', silent=True)
+    # app = Flask(__name__,
+    #             static_folder='../static')
+    EXEC_ENV = os.getenv("ENV")
+    if EXEC_ENV == 'DEV':
+        logging.info("Running in development environment")
+        app.config.from_pyfile('config_dev.py', silent=True)
+    elif EXEC_ENV == 'PROD':
+        logging.info("Running in production environment")
+        app.config.from_pyfile('config_prod.py', silent=True)
     else:
-        app.config.from_mapping(test_config)
-
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
+        logging.error(
+            'EXEC_ENV environment variable not configured to values DEV or PROD, exiting...')
+        return
+    # app.config.from_mapping(
+    #     SECRET_KEY='dev',
+    #     DATABASE=os.path.join(app.root_path, '/../data/app.sqlite'),
+    #     IMG_UPLOAD_FOLDER_RELATIVE_STATIC='images',
+    #     IMG_UPLOAD_FOLDER=os.path.join(app.static_folder, 'images'),
+    #     ALLOWED_EXTENSIONS={'png', 'jpg', 'jpeg'},
+    #     JSON_SORT_KEYS=False
+    # )
 
     # Initialize database
     import app.db as db
@@ -69,6 +71,24 @@ def create_app(test_config=None):
 
     app.register_blueprint(user_bp, url_prefix=v1_prefix)
     app.register_blueprint(customer_bp, url_prefix=v1_prefix)
+
+    # To prevent XSS, setting Content-Type to application/json should do the trick for most
+    # modern browsers, but some may still sniff
+    # the response and guess content type based on
+    # that, to prevent that we set the
+    # X-Content-Type-Options header to nosniff
+    # so the browser respects Content-Type
+    @app.after_request
+    def apply_security_measures(response):
+        """
+        Cleans responses from potential XSS attacks with bleach
+        Adds header to ask browsers not to guess content type and
+        follow the content-type header
+        """
+        if response.content_type in ['text/html', 'application/json']:
+            response.headers['X-Content-Type-Options'] = 'nosniff'
+            response.set_data(bleach.clean(response.get_data(as_text=True)))
+        return response
 
     @ app.route('/')
     def root():
