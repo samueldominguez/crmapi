@@ -12,35 +12,36 @@
 The different objects managed by the API at the user level, not at the implementation level.
 ## User
 Represents each user's information. Users can create, read, update and delete customers. Users also can have a variety of roles. Among them, `admin` is the most important. Users with the `admin` role can create, read, update and delete **users**. The following table illustrates the `User` object:
-|Property|Description|Required|
-|-|-|-|
-|id|Primary key|Automatically generated, required when operating on users|
-|user_name|User's user name, unique|Yes|
-|name| User's name|No|
-|surname| User's surname|No|
-|roles|List of the user's `Role`s|No|
+| Property  | Description                | Required                                                  |
+| --------- | -------------------------- | --------------------------------------------------------- |
+| id        | Primary key                | Automatically generated, required when operating on users |
+| user_name | User's user name, unique   | Yes                                                       |
+| name      | User's name                | No                                                        |
+| surname   | User's surname             | No                                                        |
+| roles     | List of the user's `Role`s | No                                                        |
+
 When users are created, a password must be provided. These passwords are hashed via the [key derivation function Argon2](https://en.wikipedia.org/wiki/Argon2), along with a salt that generated at the time of creation, and stored in the database. The user's passwords are not stored in the database in plaintext.
 
 ## Customer
 `Customer` objects represent the customer's information. Customers can be created by any user. The following table illustrates the `Customer` object:
-|Property|Description|Required|
-|-|-|-|
-|id|Primary key|Automatically generated, required when operating on customers|
-|name|Customer's name|Yes|
-|surname|Customer's surname|Yes|
-|photoURL|URL to the customer's profile picture|Yes|
-|last_updated_by|Simple representation of the `User` who last updated this customer object|Automatically generated|
-|created_by|Simple representation of the `User` who created this customer object|Automatically generated|
+| Property        | Description                                                               | Required                                                      |
+| --------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| id              | Primary key                                                               | Automatically generated, required when operating on customers |
+| name            | Customer's name                                                           | Yes                                                           |
+| surname         | Customer's surname                                                        | Yes                                                           |
+| photoURL        | URL to the customer's profile picture                                     | Yes                                                           |
+| last_updated_by | Simple representation of the `User` who last updated this customer object | Automatically generated                                       |
+| created_by      | Simple representation of the `User` who created this customer object      | Automatically generated                                       |
 
 `photoURL` field after creation will always point to a picture stored in the API server, which will be served as a static file over HTTP. When creating the customer though, an image file can be passed in the body, or the URL of an image hosted in another server can be passed, where the CRM API will download the picture from said URL and store it in its filesystem. The API will then set that customer's `photoURL` to the file in it's filesystem.
 
 ## Role
 Roles are just a unique string (along with an integer primary key), and their significance is given by the application code. For example, the `admin` role is required by the application to perform any CRUD operation on users.
 The following table illustrates the `Role` object:
-|Property|Description|Required|
-|-|-|-|
-|id|Primary key|Automatically generated, required when dealing with role objects|
-|name|unique string representing the name of the role|Yes|
+| Property | Description                                     | Required                                                         |
+| -------- | ----------------------------------------------- | ---------------------------------------------------------------- |
+| id       | Primary key                                     | Automatically generated, required when dealing with role objects |
+| name     | unique string representing the name of the role | Yes                                                              |
 
 # Endpoints
 ## Authentication
