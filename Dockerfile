@@ -12,4 +12,5 @@ ENV PYTHONDONTWRITEBYTECODE 1
 
 FROM base as prod
 ENV ENV PROD
+RUN ["flask", "--app", "app", "init-db"]
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "run:create_app()", "--log-level debug"]

@@ -2,9 +2,16 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import click
+import os
+
+ENV = os.getenv('ENV')
+if ENV == 'DEV':
+    import config_dev as config
+else:
+    import config_prod as config
 
 engine = create_engine(
-    'sqlite:///data/app.sqlite')
+    'sqlite:///' + os.path.join(config._DATABASE_FOLDER, config._DATABASE_NAME))
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,
                                          bind=engine))
@@ -19,12 +26,15 @@ def init_db():
     admin_role = app.models.Role('admin')
     wizard_role = app.models.Role('wizard')
     # Create first admin, and a normal user
+    marduk_password = 'universe' if ENV == 'DEV' else config.ADMIN_PROD_PASSWORD
     marduk = app.models.User('marduk', 'universe',
                              name='Marduk', surname='Babylonian', administrator=True, roles=[admin_role, wizard_role])
-    human = app.models.User('human', 'earth',
-                            name='Human', surname='Earthling', administrator=False, roles=[wizard_role])
     db_session.add(marduk)
-    db_session.add(human)
+    if ENV == 'DEV':
+        human = app.models.User('human', 'earth',
+                                name='Human', surname='Earthling', administrator=False, roles=[wizard_role])
+
+        db_session.add(human)
     db_session.commit()
 
 

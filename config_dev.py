@@ -9,8 +9,9 @@ import os
 
 _WORK_DIR = '/Users/samuel/devl/crmapi'
 _DATABASE_NAME = 'app.sqlite'
+_DATABASE_FOLDER = 'data'
 SECRET_KEY = 'XAhR5ffu0jGy2dPPSiFSEJYRplJvlaImzV4GZQN7nIk'
-DATABASE = os.path.join(_WORK_DIR, '/data/', _DATABASE_NAME)
+DATABASE = os.path.join(_WORK_DIR, _DATABASE_FOLDER, _DATABASE_NAME)
 IMG_UPLOAD_FOLDER_RELATIVE_STATIC = 'images',
 IMG_UPLOAD_FOLDER = os.path.join(
     _WORK_DIR, 'static', IMG_UPLOAD_FOLDER_RELATIVE_STATIC)

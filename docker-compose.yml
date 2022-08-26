@@ -9,6 +9,9 @@ services:
     ports:
       - 5000:5000
     volumes:
-      - ./data/app.sqlite:/var/www/crmapi/data/app.sqlite
-      - ./static:/var/www/crmapi/static
-      - ./app:/var/www/crmapi/app
+      - database:/var/www/crmapi/data/app.sqlite
+      - static:/var/www/crmapi/static
+
+volumes:
+  database:
+  static:
