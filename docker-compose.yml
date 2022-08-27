@@ -6,10 +6,18 @@ services:
     build:
       context: .
       target: "prod"
+    entrypoint:
+      [
+        "gunicorn",
+        "--bind",
+        "0.0.0.0:5000",
+        "run:create_app()",
+        "--log-level debug"
+      ]
     ports:
       - 5000:5000
     volumes:
-      - database:/var/www/crmapi/data/app.sqlite
+      - database:/var/www/crmapi/data
       - static:/var/www/crmapi/static
 
 volumes:

@@ -18,6 +18,7 @@ import os
 import secrets
 from sqlalchemy import exc
 import requests
+import logging
 
 customer_bp = Blueprint('customer', __name__)
 
@@ -55,6 +56,7 @@ def handle_photoURL(photoURL, req, app):
         url_img_extension = photoURL.split('.')[-1]
         filename = '{}.{}'.format(
             secrets.token_urlsafe(64), url_img_extension)
+        logging.info(filename)
         if not allowed_file(filename):
             return (None, "file extension '{}' is not valid".format(url_img_extension))
         # write to disk
@@ -72,6 +74,7 @@ def customer_add():
     name = request.args.get('name')
     surname = request.args.get('surname')
     photoURL = request.args.get('photoURL')
+    logging.info(photoURL)
     (photoURL, err) = handle_photoURL(photoURL, request, current_app)
     if err:
         return bad_req_handler(err)

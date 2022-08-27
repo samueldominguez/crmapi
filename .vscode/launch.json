@@ -9,11 +9,12 @@
             "type": "python",
             "request": "launch",
             "module": "flask",
-            "env": {},
+            "env": {
+                "ENV": "DEV"
+            },
             "args": [
                 "--debug",
-                "run",
-                "--no-debugger"
+                "init-db"
             ],
             "jinja": true,
             "justMyCode": true

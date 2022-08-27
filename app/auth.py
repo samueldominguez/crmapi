@@ -6,6 +6,7 @@ from flask import (
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 from functools import wraps
 from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
 import jwt
 from app.db import db_session
 from app.models import User
@@ -24,8 +25,11 @@ def verify_password(user, password):
     u = db_session.query(User).filter(User.user_name == user).first()
     if u is None:
         return None
-    elif ph.verify(u.password_hash, u.salt + password):
+    try:
+        ph.verify(u.password_hash, u.salt + password)
         return u
+    except VerifyMismatchError:
+        return None
 
 
 @token_auth.verify_token
@@ -68,7 +72,6 @@ def token_get():
         'user_id': basic_auth.current_user().id
     }
     token = jwt.encode(payload, 'secret')
-    logging.info('')
     return jsonify({
         'token': token,
         'expires_at': expiry.isoformat()

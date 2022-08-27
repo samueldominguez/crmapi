@@ -3,6 +3,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import click
 import os
+import logging
 
 ENV = os.getenv('ENV')
 if ENV == 'DEV':
@@ -22,19 +23,22 @@ Base.query = db_session.query_property()
 def init_db():
     import app.models
     Base.metadata.create_all(bind=engine)
+    # Check if the database already has content
     # Create roles
     admin_role = app.models.Role('admin')
     wizard_role = app.models.Role('wizard')
+    db_session.add(admin_role, wizard_role)
     # Create first admin, and a normal user
     marduk_password = 'universe' if ENV == 'DEV' else config.ADMIN_PROD_PASSWORD
-    marduk = app.models.User('marduk', 'universe',
-                             name='Marduk', surname='Babylonian', administrator=True, roles=[admin_role, wizard_role])
+    marduk = app.models.User('marduk', marduk_password,
+                             name='Marduk', surname='Babylonian', roles=[admin_role, wizard_role])
     db_session.add(marduk)
     if ENV == 'DEV':
         human = app.models.User('human', 'earth',
                                 name='Human', surname='Earthling', administrator=False, roles=[wizard_role])
 
         db_session.add(human)
+    logging.info("Created some stuff son")
     db_session.commit()
 
 
@@ -52,3 +56,10 @@ def init_db_command():
 def init_app(app):
     app.teardown_appcontext(close_db)
     app.cli.add_command(init_db_command)
+    if not engine.has_table('user'):
+        logging.info("Database has not been initialized")
+        logging.info("Creating database...")
+        init_db()
+        logging.info('Created the database')
+    else:
+        logging.info('Database exists already, not regenerating')

@@ -1,4 +1,5 @@
 from flask import url_for, current_app, jsonify
+import logging
 
 
 def bad_req_handler(error):
@@ -32,6 +33,9 @@ def fill_response_with_pagination_headers(resp, page, per_page, total, route_nam
 
 def allowed_file(filename):
     """Check if file name is valid for upload into server"""
+    logging.info(filename)
+    logging.info(current_app.config.get('ALLOWED_EXTENSIONS'))
+    logging.info(current_app.config)
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower(
-           ) in current_app.config.get('ALLOWED_EXTENSIONS')
+        filename.rsplit('.', 1)[1].lower(
+        ) in current_app.config.get('ALLOWED_EXTENSIONS')

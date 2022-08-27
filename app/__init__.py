@@ -31,31 +31,24 @@ def create_app(test_config=None):
     })
     app = Flask(__name__,
                 static_folder='../static')
-    # app = Flask(__name__,
-    #             static_folder='../static')
+    logging.info('Creating application')
     EXEC_ENV = os.getenv("ENV")
     if EXEC_ENV == 'DEV':
         logging.info("Running in development environment")
-        app.config.from_pyfile('config_dev.py', silent=True)
+        app.config.from_pyfile('../config_dev.py', silent=True)
     elif EXEC_ENV == 'PROD':
         logging.info("Running in production environment")
-        app.config.from_pyfile('config_prod.py', silent=True)
+        app.config.from_pyfile('../config_prod.py', silent=True)
     else:
         logging.error(
             'EXEC_ENV environment variable not configured to values DEV or PROD, exiting...')
         return
-    # app.config.from_mapping(
-    #     SECRET_KEY='dev',
-    #     DATABASE=os.path.join(app.root_path, '/../data/app.sqlite'),
-    #     IMG_UPLOAD_FOLDER_RELATIVE_STATIC='images',
-    #     IMG_UPLOAD_FOLDER=os.path.join(app.static_folder, 'images'),
-    #     ALLOWED_EXTENSIONS={'png', 'jpg', 'jpeg'},
-    #     JSON_SORT_KEYS=False
-    # )
 
     # Initialize database
+    logging.info('Initializing database...')
     import app.db as db
     db.init_app(app)
+    logging.info('Database initialized')
 
     # v1 api prefix
     v1_prefix = '/api/v1/'
@@ -63,14 +56,18 @@ def create_app(test_config=None):
     # Authentication
     from app.auth import auth_bp
 
+    logging.info('Registering authentication endpoints...')
     app.register_blueprint(auth_bp, url_prefix=v1_prefix + 'auth/')
+    logging.info('Authentication endpoints registered')
 
     # Application routes
     from app.user import user_bp
     from app.customer import customer_bp
 
+    logging.info('Registering application endpoints...')
     app.register_blueprint(user_bp, url_prefix=v1_prefix)
     app.register_blueprint(customer_bp, url_prefix=v1_prefix)
+    logging.info('Application endpoints registered')
 
     # To prevent XSS, setting Content-Type to application/json should do the trick for most
     # modern browsers, but some may still sniff
@@ -95,4 +92,5 @@ def create_app(test_config=None):
         logging.info('root handler called')
         return '<h1>CRM API</h1><p>Welcome to the CRM API</p>'
 
+    logging.info('Application created.')
     return app

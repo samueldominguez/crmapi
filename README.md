@@ -41,10 +41,10 @@ to stop the container.
 Alternatively, you can run the application directly on your system without docker. Take a look at the [Dockerfile for running the commands](Dockerfile). Currently, this is more pragmatic if you are using the hot-reload feature a lot.
 ## Production environment
 Follow the getting started guide for the development environment with the following modifications:
-- the file [config_prod.py](config_prod.py) needs to be setup for the production environment. Make sure to change the administrator password
+- the file [config_prod.py](config_prod.py) needs to be setup for the production environment. Make sure to change the **administrator password** and the **secret key** variables
 - there is no mounting of repository files like in the debugging container. **Two volumes** are created instead, one for the database and another for the static files (customer profile pictures), and they are mounted in the corresponding folders.
 
 There are a few missing features from the production environment, namely:
 - More scalable persistence, like PostgreSQL instead of SQLite
 - Load balancer and better static file serving via NGINX
-- HTTPs only 
+- HTTPs, certificate from [Let's Encrypt](https://letsencrypt.org/) and automatic renewal via [Certbot](https://certbot.eff.org/)
