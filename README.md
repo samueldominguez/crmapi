@@ -17,6 +17,10 @@ Then install the packages via pip:
 ```bash
 pip install -r requirements.txt
 ```
+Lastly, install [Newman testing tool](https://github.com/postmanlabs/newman) for running Postman tests:
+```bash
+npm install -g newman
+```
 ## Setting up the configuration file
 There is both [config_dev.py](config_dev.py) and [config_prod.py](config_prod.py) configuration files. One for each environment. Please modify the variables according to your liking.
 ## Creating the database
@@ -39,6 +43,19 @@ Should you need to stop the container, do a double `Ctrl-C` and run:
 to stop the container.
 
 Alternatively, you can run the application directly on your system without docker. Take a look at the [Dockerfile for running the commands](Dockerfile). Currently, this is more pragmatic if you are using the hot-reload feature a lot.
+## Running tests
+To run the tests, make sure you have a running application. By default, the tests will make requests to `http://127.0.0.1:5000`, but this can be changed by editing the `url` variable in the [CRMAPI.postman_environment.json](tests/CRMAPI.postman_environment.json) file.
+
+The tests are using Postman [collections](https://www.postman.com/collection/) & an [environment](https://learning.postman.com/docs/sending-requests/managing-environments/).
+
+To run the tests, go to the `tests` folder and run:
+```bash
+newman run CRMAPI.postman_collection.json -e CRMAPI.postman_environment.json
+```
+The results will be displayed on screen.
+
+### Travis CI integration
+The file [.travis.yml](.travis.yml) tells Travis CI to run the tests after a commit. The exit code of newman will tell Travis whether the tests succeeded or not.
 ## Production environment
 Follow the getting started guide for the development environment with the following modifications:
 - the file [config_prod.py](config_prod.py) needs to be setup for the production environment. Make sure to change the **administrator password** and the **secret key** variables
