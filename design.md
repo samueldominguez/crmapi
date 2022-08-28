@@ -4,9 +4,10 @@
   - [2.1. User <a name="dmuser"></a>](#21-user-)
   - [2.2. Customer](#22-customer)
   - [2.3. Role](#23-role)
+    - [OAuth2 objects](#oauth2-objects)
 - [3. Endpoints](#3-endpoints)
   - [3.1. Authentication](#31-authentication)
-    - [3.1.1. POST /api/v1/tokens](#311-post-apiv1tokens)
+    - [3.1.1. POST /api/v1/oauth/token](#311-post-apiv1oauthtoken)
       - [3.1.1.1. **Authentication**](#3111-authentication)
       - [3.1.1.2. **Parameters**](#3112-parameters)
       - [3.1.1.3. **Returns**](#3113-returns)
@@ -53,7 +54,7 @@
       - [3.3.5.2. **Parameters**](#3352-parameters)
       - [3.3.5.3. **Returns**](#3353-returns)
 - [4. Other design details](#4-other-design-details)
-  - [4.1. Token format](#41-token-format)
+  - [4.1. OAuth2 tokens](#41-oauth2-tokens)
   - [4.2. Keeping profile pictures "safe"](#42-keeping-profile-pictures-safe)
   - [4.3. Preventing SQL injections and XSS attacks](#43-preventing-sql-injections-and-xss-attacks)
   - [4.4. Pagination on resource lists](#44-pagination-on-resource-lists)
@@ -66,7 +67,7 @@
 - *SQLite* - for persistence, due to our usage of an ORM, application code is agnostic to the 'storage engine' behind it. Really easy to set up, and more scalable than it might seem. However, for a production system, something that scale much better like *postgresql* should be used.
 - *Docker* - for containerisation, best containerisation tooling out there
 - *Pytest* - for unit testing, among the most used unit testing libraries and well documented
-- Basic Auth into Bearer Auth (similar to and simpler than OAuth2) - safer than basic auth on every request, but not compliant to OAuth2 standard, this is definitely on the TODO list.
+- *OAuth2* resource owner password flow. Safer than basic auth on every request, compliant with OAuth2 specs. This type of flow is not the most secure, but the client has the same level of trust as the API beacuse it's developed by the same institution, therefore it's fine to trust the client with the resource owner's credentials
 
 # 2. Data Model
 The different objects managed by the API at the user level, not at the implementation level.
@@ -102,23 +103,59 @@ The following table illustrates the `Role` object:
 | -------- | ----------------------------------------------- | ---------------------------------------------------------------- |
 | id       | Primary key                                     | Automatically generated, required when dealing with role objects |
 | name     | unique string representing the name of the role | Yes                                                              |
+### OAuth2 objects
+The following are OAauth2 relevant objects:
+
+**OAuth2 Client** represents the client which will connect to the API. The API already comes with a pre-authorised client, and more can be registered manually. The following illustrates the OAuth2 Client object:
+| Property  | Description                                | Required                |
+| --------- | ------------------------------------------ | ----------------------- |
+| id        | Primary key                                | Automatically generated |
+| client_id | Identifies each client beyond the database | Yes                     |
+| scopes    | Array of scopes allowed to this client     | Yes                     |
+| grants    | Array of grants allowed to this client     | Yes                     |
+
+**OAuth2 Grant**
+Currently there are two supported grants, `password`, which allows for basic auth, and `refresh_token` which allows for bearer token authentication via a refesh token, provided with the access_token response:
+| Property | Description                    | Required                |
+| -------- | ------------------------------ | ----------------------- |
+| id       | Primary key                    | Automatically generated |
+| name     | Identifies each grant uniquely | Yes                     |
+
+**OAuth2 Scope**
+This is actually just `Role`, there is no Oauth2 scope object.
 
 # 3. Endpoints
 ## 3.1. Authentication
-### 3.1.1. POST /api/v1/tokens
+### 3.1.1. POST /api/v1/oauth/token
 #### 3.1.1.1. **Authentication**
-Basic auth with `user_name` and `password` specified during user creation
+Basic auth with `user_name` and `password` specified during user creation, or via bearer token with the `refresh_token` generated along with the `access_token`
 #### 3.1.1.2. **Parameters**
-None.
+- `client_id` identifies the client using the API, a client has already been generated for testing purposes, check [config_dev.py](config_dev.py)
+- `grant` this should be `password` if obtaining the access_token for the first time and using basic auth, or `refresh_token` if using the refresh token to obtain a new access_token
+- `scope` the scopes the client wants to have access to (ultimately, the scopes the users using this particular client will have access to, even if the users have access to these scopes, if the client is not authorised to use these scopes, the users won't be able to use them). `scope` here is just OAuth2 semantics for the `Role` object defined in [app/models.py](app/models.py). Please **note** that if you are refreshing your access token via a refresh token, you do not need to specify the scopes as those are encoded in the JWT token
 #### 3.1.1.3. **Returns**
-- `expires_at` datetime in UTC, iso format, specifies when token expires
-- `token` the token to use for authentication in all other endpoints
+- `access_token` bearer token to use in all other endpoints
+- `issued_at` unix timestamp indicating when the token was generated
+- `expires_in` the amount of seconds from `issued_at` the token will be valid for
+- `token_type` the token type, always `BearerToken` in our case
+- `scope` the subset of requested scopes the API allows the client to use with this token
+- `grant` the type of grant requested, reflected back to the user
+- `client_id` the ID of the client that made the request, reflected back to the user
+- `refresh_token` the bearer token used to obtain a new `access_token` (and refresh token)
+- `refresh_token_expires_in` amount of seconds from `issued_at` the refresh token will be valid for
 
 e.g.:
 ```json
 {
-    "expires_at": "2022-08-25T16:18:44.228848+00:00",
-    "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2NjE0MjMzNzcsInVzZXJfaWQiOjJ9.xi_9gYELYE8SgO4qvS_IKZEPB4K1LtYf5Y-i0J8oQ8M"
+    "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2NjE3MjQyNTYsInVzZXJfaWQiOjEsInR5cGUiOiJhY2Nlc3NfdG9rZW4ifQ.VBUA3KRhKwG4dhik7SnRNOkHEzZ3XqaNvI96HuD8V6M",
+    "issued_at": 1661720656,
+    "expires_in": 3600,
+    "token_type": "BearerToken",
+    "scope": "admin,wizard",
+    "grant": "password",
+    "client_id": "AEwgqY-ZTyBwPUtllgoDoKyElMV6PuFdflA14FG6Br6gY4ag4TwYcnjy8A02dQJp9L7n8z8YhLc0BgATKVNaRg",
+    "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2NjE3Mjc4NTYsInVzZXJfaWQiOjEsInNjb3BlIjoiYWRtaW4sd2l6YXJkIiwidHlwZSI6InJlZnJlc2hfdG9rZW4ifQ.1rPfgmzUBWHkOr_34_tqUbg8VW5pcwKY_3V-B66-meg",
+    "refresh_token_expires_in": 7200
 }
 ```
 ## 3.2. User
@@ -225,12 +262,18 @@ Bearer token authentication
 #### 3.3.5.3. **Returns**
 An array of customer objects corresponding to the established pagination. The `Link` header in the response contains two URLs, one for the next page, and one for the last page. The `X-Total-Count` header specifies the current total number of users. See the [pagination section for more details.](#pagination-on-resource-lists) 
 # 4. Other design details
-## 4.1. Token format
-The token received after a successful basic auth is a JWT. The payload of this token contains:
+## 4.1. OAuth2 tokens
+The access token and refresh_token received after a password grant, or via a refresh_token grant is a JWT. The payload of this token contains:
 1. expiry time
 2. user ID
+3. type (either `access_token` or `refresh_token`)
+4. scope (to continue generating new tokens with the originally requested set of scopes)
 
 By keeping this data in the token itself, after successful decoding, we can verify the user exists and their role by performing a database lookup, to check whether the endpoint is authorised for them, effectively acting as a kind of session. The user role could be embedded in the JWT, however this means any role updates between token generation and its expiry would not take effect, unless the database was queried to verify it, which would defeat the point of encoding it in the token. Expiry time however, will not change, and therefore can be put in the token itself, which saves having to store it and an additional JOIN.
+
+The type allows us check whether a refresh token is being sent when authorising a non oauth endpoint, since refresh tokens are also sent as bearer tokens. Refresh tokens are only used to generate a new set of tokens. By decoding the payload and checking the type we can avoid this.
+
+By keeping the scope of the token in the token itself, we can make sure it only authorises the originally requested set of scopes. The refresh token will also generate new tokens with the same original set of scopes.
 ## 4.2. Keeping profile pictures "safe"
 Profile pictures are not protected behind any authentication or authorization. They are served when requested by anybody. However, the file names of uploaded images are always replaced by a random 64 byte string, which in effect makes it a sort of password. The only privacy concern would come from a user sharing the URL of any of these pictures. Once someone is in posession of an image URL, they will always have access to them, but this shouldn't be a major privacy concern.
 ## 4.3. Preventing SQL injections and XSS attacks
