@@ -1,5 +1,5 @@
 #!/bin/bash
-docker-compose --file compose-dev.yml up -d
+docker-compose --file compose-dev.yml up -d --build
 while :
 do
     docker-compose --file compose-dev.yml logs --follow crmapi

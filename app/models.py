@@ -11,6 +11,16 @@ user_roles_table = Table('user_roles', Base.metadata,
                          Column('role_id', ForeignKey('role.id')),
                          )
 
+oauth2client_scopes_table = Table('oauth2client_scopes', Base.metadata,
+                                  Column('oauth2client_id',
+                                         ForeignKey('oauth2client.id')),
+                                  Column('scope_id', ForeignKey('role.id')))
+
+oauth2client_grants_table = Table('oauth2client_grants', Base.metadata,
+                                  Column('oauth2client_id',
+                                         ForeignKey('oauth2client.id')),
+                                  Column('grant_id', ForeignKey('grant.id')))
+
 
 class User(Base):
     __tablename__ = 'user'
@@ -56,9 +66,42 @@ class Customer(Base):
 
 
 class Role(Base):
+    """
+    Role defines groups of users who
+    have access to a given resource
+
+    It's semantically the same as a scope in the OAuth2 standard
+    """
     __tablename__ = 'role'
     id = Column(Integer, primary_key=True)
     name = Column(String(20), unique=True)
 
     def __init__(self, name):
         self.name = name
+
+
+class OAuth2Grant(Base):
+    """
+    OAuth2 grant types
+    """
+    __tablename__ = 'grant'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(30), unique=True)
+
+    def __init__(self, name):
+        self.name = name
+
+
+class OAuth2Client(Base):
+    __tablename__ = 'oauth2client'
+    id = Column(Integer, primary_key=True)
+    client_id = Column(String(100), unique=True)
+    # mapping of OAuth2 scopes to application roles
+    scopes = relationship('Role', secondary=oauth2client_scopes_table)
+    # OAuth2 grants
+    grants = relationship('OAuth2Grant', secondary=oauth2client_grants_table)
+
+    def __init__(self, client_id, scopes, grants):
+        self.client_id = client_id
+        self.scopes = scopes
+        self.grants = grants

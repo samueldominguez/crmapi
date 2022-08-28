@@ -22,6 +22,6 @@ services:
         "--multiprocess", "-m", "flask", "run", "-h", "0.0.0.0", "-p", "5000"
       ]
     volumes:
-      - ./data/app.sqlite:/var/www/crmapi/data/app.sqlite
+      - ./data:/var/www/crmapi/data
       - ./static:/var/www/crmapi/static
       - ./app:/var/www/crmapi/app

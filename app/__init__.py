@@ -57,7 +57,7 @@ def create_app(test_config=None):
     from app.auth import auth_bp
 
     logging.info('Registering authentication endpoints...')
-    app.register_blueprint(auth_bp, url_prefix=v1_prefix + 'auth/')
+    app.register_blueprint(auth_bp, url_prefix=v1_prefix + 'oauth/')
     logging.info('Authentication endpoints registered')
 
     # Application routes
