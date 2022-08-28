@@ -59,10 +59,10 @@
   - [4.4. Pagination on resource lists](#44-pagination-on-resource-lists)
 
 # 1. Tech stack choices
-- *Python* - great library/framework ecosystem for the backend, development speed usually quite fast 
+- *Python* - dynamic language with a great library/framework ecosystem for the backend, development speed usually quite fast 
 - *Flask* - web microframework, not as many features as Django, but suffices for a REST API
-- *Gunicorn* - WSGI production web server, among the most stable WSGIs out there
-- *SQLAlchemy* - used for an ORM, lots of documentation, more safe and less cumbersome than patching aplication code with SQL queries
+- *Gunicorn* - WSGI production web server, among the most used out there
+- *SQLAlchemy* - used as an ORM, lots of documentation, safer and less cumbersome than raw SQL
 - *SQLite* - for persistence, due to our usage of an ORM, application code is agnostic to the 'storage engine' behind it. Really easy to set up, and more scalable than it might seem. However, for a production system, something that scale much better like *postgresql* should be used.
 - *Docker* - for containerisation, best containerisation tooling out there
 - *Pytest* - for unit testing, among the most used unit testing libraries and well documented

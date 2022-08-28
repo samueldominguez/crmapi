@@ -1,0 +1,185 @@
+{
+	"info": {
+		"_postman_id": "46c2e850-09f5-4b4d-8a35-5bf09f88f7d6",
+		"name": "CRMAPI",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15032566"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Get admin token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"pm.environment.set('admin_token', jsonData['token']);",
+									"",
+									"// status code",
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// check it has correct fields",
+									"pm.test(\"Response has correct fields\", function() {",
+									"    pm.expect(jsonData).to.have.property('token');",
+									"    pm.expect(jsonData).to.have.property('expires_at');",
+									"})",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{admin_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{admin_user_name}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/auth/tokens",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"auth",
+								"tokens"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get normal token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"pm.environment.set('admin_token', jsonData['token']);",
+									"",
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has correct fields\", function() {",
+									"    pm.expect(jsonData).to.have.property('token');",
+									"    pm.expect(jsonData).to.have.property('expires_at');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{admin_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{admin_user_name}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/auth/tokens",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"auth",
+								"tokens"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid credentials",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function() {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "invalid_password",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "invalid_user",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/auth/tokens",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"auth",
+								"tokens"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "New Request",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
