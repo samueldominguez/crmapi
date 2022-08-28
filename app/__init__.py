@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from logging.config import dictConfig
 import logging
 import os

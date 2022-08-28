@@ -44,7 +44,7 @@ to stop the container.
 
 Alternatively, you can run the application directly on your system without docker. Take a look at the [Dockerfile for running the commands](Dockerfile). Currently, this is more pragmatic if you are using the hot-reload feature a lot.
 ## Running tests
-To run the tests, make sure you have a running application. By default, the tests will make requests to `http://127.0.0.1:5000`, but this can be changed by editing the `url` variable in the [CRMAPI.postman_environment.json](tests/CRMAPI.postman_environment.json) file.
+To run the tests, make sure you have a running application **in 'development environment' mode**. The tests are configured for the [config_dev.py](config_dev.py) configuration. By default, the tests will make requests to `http://127.0.0.1:5000`, but this can be changed by editing the `url` variable in the [CRMAPI.postman_environment.json](tests/CRMAPI.postman_environment.json) file.
 
 The tests are using Postman [collections](https://www.postman.com/collection/) & an [environment](https://learning.postman.com/docs/sending-requests/managing-environments/).
 
@@ -65,3 +65,4 @@ There are a few missing features from the production environment, namely:
 - More scalable persistence, like PostgreSQL instead of SQLite
 - Load balancer and better static file serving via NGINX
 - HTTPs, certificate from [Let's Encrypt](https://letsencrypt.org/) and automatic renewal via [Certbot](https://certbot.eff.org/)
+- More OAuth2 flows, currently only uses the resource owner password flow

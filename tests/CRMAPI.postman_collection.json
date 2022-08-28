@@ -10,79 +10,45 @@
 			"name": "Authentication",
 			"item": [
 				{
-					"name": "Get admin token",
+					"name": "Get admin access_token",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
 									"var jsonData = JSON.parse(responseBody);",
-									"pm.environment.set('admin_token', jsonData['token']);",
-									"",
-									"// status code",
-									"pm.test(\"Status code is 200\", function() {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"// check it has correct fields",
-									"pm.test(\"Response has correct fields\", function() {",
-									"    pm.expect(jsonData).to.have.property('token');",
-									"    pm.expect(jsonData).to.have.property('expires_at');",
-									"})",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "basic",
-							"basic": [
-								{
-									"key": "password",
-									"value": "{{admin_password}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{admin_user_name}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{url}}/auth/tokens",
-							"host": [
-								"{{url}}"
-							],
-							"path": [
-								"auth",
-								"tokens"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get normal token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = JSON.parse(responseBody);",
-									"pm.environment.set('admin_token', jsonData['token']);",
+									"pm.environment.set('admin_access_token', jsonData['access_token']);",
+									"pm.environment.set('admin_refresh_token', jsonData['refresh_token']);",
 									"",
 									"pm.test(\"Status code is 200\", function() {",
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
 									"pm.test(\"Response has correct fields\", function() {",
-									"    pm.expect(jsonData).to.have.property('token');",
-									"    pm.expect(jsonData).to.have.property('expires_at');",
+									"    pm.expect(jsonData).to.have.all.keys(",
+									"        'access_token',",
+									"        'expires_in',",
+									"        'issued_at',",
+									"        'token_type',",
+									"        'scope',",
+									"        'grant',",
+									"        'client_id',",
+									"        'refresh_token',",
+									"        'refresh_token_expires_in'",
+									"        );",
+									"});",
+									"",
+									"pm.test(\"Response has correct values\", function() {",
+									"    pm.expect(jsonData.access_token.length > 16);",
+									"    pm.expect(jsonData.issued_at > 0);",
+									"    pm.expect(jsonData.expires_in == 3600);",
+									"    pm.expect(jsonData.token_type == \"BearerToken\");",
+									"    pm.expect(jsonData.scope == pm.environment.scope);",
+									"    pm.expect(jsonData.grant == 'password');",
+									"    pm.expect(jsonData.client_id == pm.environment.client_id);",
+									"    pm.expect(jsonData.refresh_token.length > 16);",
+									"    pm.expect(jsonData.refresh_token_expires_in == 7200);",
+									"    pm.expect(jsonData.refresh_token != jsonData.access_token);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -108,13 +74,288 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{url}}/auth/tokens",
+							"raw": "{{url}}/oauth/token?client_id={{client_id}}&grant=password&scope={{scope}}",
 							"host": [
 								"{{url}}"
 							],
 							"path": [
-								"auth",
-								"tokens"
+								"oauth",
+								"token"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "{{client_id}}"
+								},
+								{
+									"key": "grant",
+									"value": "password"
+								},
+								{
+									"key": "scope",
+									"value": "{{scope}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get admin refresh_token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"pm.environment.set('admin_access_token', jsonData['access_token']);",
+									"pm.environment.set('admin_refresh_token', jsonData['refresh_token']);",
+									"",
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has correct fields\", function() {",
+									"    pm.expect(jsonData).to.have.all.keys(",
+									"        'access_token',",
+									"        'expires_in',",
+									"        'issued_at',",
+									"        'token_type',",
+									"        'scope',",
+									"        'grant',",
+									"        'client_id',",
+									"        'refresh_token',",
+									"        'refresh_token_expires_in'",
+									"        );",
+									"});",
+									"",
+									"pm.test(\"Response has correct values\", function() {",
+									"    pm.expect(jsonData.access_token.length > 16);",
+									"    pm.expect(jsonData.issued_at > 0);",
+									"    pm.expect(jsonData.expires_in == 3600);",
+									"    pm.expect(jsonData.token_type == \"BearerToken\");",
+									"    pm.expect(jsonData.scope == pm.environment.scope);",
+									"    pm.expect(jsonData.grant == 'refresh_token');",
+									"    pm.expect(jsonData.client_id == pm.environment.client_id);",
+									"    pm.expect(jsonData.refresh_token.length > 16);",
+									"    pm.expect(jsonData.refresh_token_expires_in == 7200);",
+									"    pm.expect(jsonData.refresh_token != jsonData.access_token);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_refresh_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/oauth/token?client_id={{client_id}}&grant=refresh_token",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"oauth",
+								"token"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "{{client_id}}"
+								},
+								{
+									"key": "grant",
+									"value": "refresh_token"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get normal access_token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"pm.environment.set('normal_access_token', jsonData['access_token']);",
+									"pm.environment.set('normal_refresh_token', jsonData['refresh_token']);",
+									"",
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has correct fields\", function() {",
+									"    pm.expect(jsonData).to.have.all.keys(",
+									"        'access_token',",
+									"        'expires_in',",
+									"        'issued_at',",
+									"        'token_type',",
+									"        'scope',",
+									"        'grant',",
+									"        'client_id',",
+									"        'refresh_token',",
+									"        'refresh_token_expires_in'",
+									"        );",
+									"});",
+									"",
+									"pm.test(\"Response has correct values\", function() {",
+									"    pm.expect(jsonData.access_token.length > 16);",
+									"    pm.expect(jsonData.issued_at > 0);",
+									"    pm.expect(jsonData.expires_in == 3600);",
+									"    pm.expect(jsonData.token_type == \"BearerToken\");",
+									"    pm.expect(jsonData.scope == pm.environment.scope);",
+									"    pm.expect(jsonData.grant == 'password');",
+									"    pm.expect(jsonData.client_id == pm.environment.client_id);",
+									"    pm.expect(jsonData.refresh_token.length > 16);",
+									"    pm.expect(jsonData.refresh_token_expires_in == 7200);",
+									"    pm.expect(jsonData.refresh_token != jsonData.access_token);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{normal_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{normal_user_name}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/oauth/token?client_id={{client_id}}&grant=password&scope={{scope}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"oauth",
+								"token"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "{{client_id}}"
+								},
+								{
+									"key": "grant",
+									"value": "password"
+								},
+								{
+									"key": "scope",
+									"value": "{{scope}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get normal refresh_token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"pm.environment.set('normal_access_token', jsonData['access_token']);",
+									"pm.environment.set('normal_refresh_token', jsonData['refresh_token']);",
+									"",
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has correct fields\", function() {",
+									"    pm.expect(jsonData).to.have.all.keys(",
+									"        'access_token',",
+									"        'expires_in',",
+									"        'issued_at',",
+									"        'token_type',",
+									"        'scope',",
+									"        'grant',",
+									"        'client_id',",
+									"        'refresh_token',",
+									"        'refresh_token_expires_in'",
+									"        );",
+									"});",
+									"",
+									"pm.test(\"Response has correct values\", function() {",
+									"    pm.expect(jsonData.access_token.length > 16);",
+									"    pm.expect(jsonData.issued_at > 0);",
+									"    pm.expect(jsonData.expires_in == 3600);",
+									"    pm.expect(jsonData.token_type == \"BearerToken\");",
+									"    pm.expect(jsonData.scope == pm.environment.scope);",
+									"    pm.expect(jsonData.grant == 'refresh_token');",
+									"    pm.expect(jsonData.client_id == pm.environment.client_id);",
+									"    pm.expect(jsonData.refresh_token.length > 16);",
+									"    pm.expect(jsonData.refresh_token_expires_in == 7200);",
+									"    pm.expect(jsonData.refresh_token != jsonData.access_token);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{normal_refresh_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/oauth/token?client_id={{client_id}}&grant=refresh_token",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"oauth",
+								"token"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "{{client_id}}"
+								},
+								{
+									"key": "grant",
+									"value": "refresh_token"
+								}
 							]
 						}
 					},
@@ -154,30 +395,1501 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{url}}/auth/tokens",
+							"raw": "{{url}}/oauth/token?client_id={{client_id}}&scope={{scope}}&grant=password",
 							"host": [
 								"{{url}}"
 							],
 							"path": [
-								"auth",
-								"tokens"
+								"oauth",
+								"token"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "{{client_id}}"
+								},
+								{
+									"key": "scope",
+									"value": "{{scope}}"
+								},
+								{
+									"key": "grant",
+									"value": "password"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid client_id",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function() {",
+									"    pm.response.to.have.status(400);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{admin_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{admin_user_name}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/oauth/token?client_id=abcdefg&scope={{scope}}&grant=password",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"oauth",
+								"token"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "abcdefg"
+								},
+								{
+									"key": "scope",
+									"value": "{{scope}}"
+								},
+								{
+									"key": "grant",
+									"value": "password"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid scope",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function() {",
+									"    pm.response.to.have.status(400);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{admin_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{admin_user_name}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/oauth/token?client_id={{client_id}}&scope=abc,dfg&grant=password",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"oauth",
+								"token"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "{{client_id}}"
+								},
+								{
+									"key": "scope",
+									"value": "abc,dfg"
+								},
+								{
+									"key": "grant",
+									"value": "password"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid grant",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function() {",
+									"    pm.response.to.have.status(400);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{admin_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{admin_user_name}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/oauth/token?client_id={{client_id}}&scope={{scope}}&grant=refresh_token",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"oauth",
+								"token"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "{{client_id}}"
+								},
+								{
+									"key": "scope",
+									"value": "{{scope}}"
+								},
+								{
+									"key": "grant",
+									"value": "refresh_token"
+								}
 							]
 						}
 					},
 					"response": []
 				}
+			],
+			"auth": {
+				"type": "noauth"
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
 			]
 		},
 		{
-			"name": "User",
+			"name": "User stage 1",
 			"item": [
 				{
-					"name": "New Request",
+					"name": "Create User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"pm.environment.set('test_user_id', jsonData.id);",
+									"pm.environment.set('test_user_name', pm.request.url.query.get('user_name'));",
+									"",
+									"pm.test(\"Status code is 201\", function() {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has correct fields\", function() {",
+									"    pm.expect(jsonData).to.have.all.keys(",
+									"        'id',",
+									"        'user_name',",
+									"        'name',",
+									"        'surname',",
+									"        'roles'",
+									"        );",
+									"        for (i = 0; i < jsonData.roles.length; ++i) {",
+									"            pm.expect(jsonData.roles[i]).to.have.all.keys('id', 'name')",
+									"        }",
+									"});",
+									"",
+									"pm.test(\"Response has correct values\", function() {",
+									"    pm.expect(jsonData.id > 0);",
+									"    pm.expect(jsonData.user_name == pm.environment.test_user_name);",
+									"    pm.expect(jsonData.name == pm.environment.test_user_first_name);",
+									"    pm.expect(jsonData.surname == pm.environment.test_user_surname);",
+									"    pm.expect(jsonData.roles[0].id > 0);",
+									"    pm.expect(jsonData.roles[0].name == pm.environment.test_user_roles);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
-						"method": "GET",
-						"header": []
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/users?user_name={{$randomUserName}}&password={{test_user_password}}&name={{test_user_first_name}}&surname={{test_user_surname}}&roles={{test_user_roles}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"users"
+							],
+							"query": [
+								{
+									"key": "user_name",
+									"value": "{{$randomUserName}}"
+								},
+								{
+									"key": "password",
+									"value": "{{test_user_password}}"
+								},
+								{
+									"key": "name",
+									"value": "{{test_user_first_name}}"
+								},
+								{
+									"key": "surname",
+									"value": "{{test_user_surname}}"
+								},
+								{
+									"key": "roles",
+									"value": "{{test_user_roles}}"
+								}
+							]
+						}
 					},
 					"response": []
+				},
+				{
+					"name": "Update User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"pm.environment.set('test_user_name', pm.request.url.query.get('user_name'));",
+									"pm.environment.set('test_user_password', pm.request.url.query.get('password'));",
+									"pm.environment.set('test_user_first_name', pm.request.url.query.get('name'));",
+									"pm.environment.set('test_user_surname', pm.request.url.query.get('surname'));",
+									"",
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has correct fields\", function() {",
+									"    pm.expect(jsonData).to.have.all.keys(",
+									"        'id',",
+									"        'user_name',",
+									"        'name',",
+									"        'surname',",
+									"        'roles'",
+									"        );",
+									"        for (i = 0; i < jsonData.roles.length; ++i) {",
+									"            pm.expect(jsonData.roles[i]).to.have.all.keys('id', 'name')",
+									"        }",
+									"});",
+									"",
+									"pm.test(\"Response has correct values\", function() {",
+									"    pm.expect(jsonData.id == pm.environment.test_user_id);",
+									"    pm.expect(jsonData.user_name == pm.request.url.query.get('user_name'));",
+									"    pm.expect(jsonData.name == pm.request.url.query.get('name'));",
+									"    pm.expect(jsonData.surname == pm.request.url.query.get('surname'));",
+									"    pm.expect(jsonData.roles[0].id > 0);",
+									"    pm.expect(jsonData.roles[0].name == pm.environment.test_user_roles);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/users/{{test_user_id}}?user_name={{$randomUserName}}&password={{$randomPassword}}&name={{$randomFirstName}}&surname={{$randomLastName}}&roles={{test_user_roles}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"users",
+								"{{test_user_id}}"
+							],
+							"query": [
+								{
+									"key": "user_name",
+									"value": "{{$randomUserName}}"
+								},
+								{
+									"key": "password",
+									"value": "{{$randomPassword}}"
+								},
+								{
+									"key": "name",
+									"value": "{{$randomFirstName}}"
+								},
+								{
+									"key": "surname",
+									"value": "{{$randomLastName}}"
+								},
+								{
+									"key": "roles",
+									"value": "{{test_user_roles}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has correct fields\", function() {",
+									"    pm.expect(jsonData).to.have.all.keys(",
+									"        'id',",
+									"        'user_name',",
+									"        'name',",
+									"        'surname',",
+									"        'roles'",
+									"        );",
+									"        for (i = 0; i < jsonData.roles.length; ++i) {",
+									"            pm.expect(jsonData.roles[i]).to.have.all.keys('id', 'name')",
+									"        }",
+									"});",
+									"",
+									"pm.test(\"Response has correct values\", function() {",
+									"    pm.expect(jsonData.id == pm.environment.test_user_id);",
+									"    pm.expect(jsonData.user_name == pm.environment.test_user_name);",
+									"    pm.expect(jsonData.name == pm.environment.name);",
+									"    pm.expect(jsonData.surname == pm.environment.surname);",
+									"    pm.expect(jsonData.roles[0].id > 0);",
+									"    pm.expect(jsonData.roles[0].name == pm.environment.test_user_roles);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/users/{{test_user_id}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"users",
+								"{{test_user_id}}"
+							],
+							"query": [
+								{
+									"key": "user_name",
+									"value": "{{$randomUserName}}",
+									"disabled": true
+								},
+								{
+									"key": "password",
+									"value": "{{$randomPassword}}",
+									"disabled": true
+								},
+								{
+									"key": "name",
+									"value": "{{$randomFirstName}}",
+									"disabled": true
+								},
+								{
+									"key": "surname",
+									"value": "{{$randomLastName}}",
+									"disabled": true
+								},
+								{
+									"key": "roles",
+									"value": "{{test_user_roles}}",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Users 1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has correct fields\", function() {",
+									"    pm.expect(jsonData[0]).to.have.all.keys(",
+									"        'id',",
+									"        'user_name',",
+									"        'name',",
+									"        'surname',",
+									"        'roles'",
+									"        );",
+									"        for (i = 0; i < jsonData[0].roles.length; ++i) {",
+									"            pm.expect(jsonData[0].roles[i]).to.have.all.keys('id', 'name')",
+									"        }",
+									"});",
+									"",
+									"pm.test(\"Response has correct values\", function() {",
+									"    pm.expect(jsonData.length == 1);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/users?per_page=1&page=1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"users"
+							],
+							"query": [
+								{
+									"key": "per_page",
+									"value": "1"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Users 2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has correct fields\", function() {",
+									"    pm.expect(jsonData[0]).to.have.all.keys(",
+									"        'id',",
+									"        'user_name',",
+									"        'name',",
+									"        'surname',",
+									"        'roles'",
+									"        );",
+									"        for (i = 0; i < jsonData[0].roles.length; ++i) {",
+									"            pm.expect(jsonData[0].roles[i]).to.have.all.keys('id', 'name')",
+									"        }",
+									"});",
+									"",
+									"pm.test(\"Response has correct values\", function() {",
+									"    pm.expect(jsonData.length == 2);",
+									"});",
+									"",
+									"pm.test(\"Pagination headers included\", function() {",
+									"    pm.expect(pm.request.headers.Link);",
+									"    pm.expect(pm.request.headers.get('X-Total-Count'));",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/users?per_page=2&page=1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"users"
+							],
+							"query": [
+								{
+									"key": "per_page",
+									"value": "2"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{admin_access_token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Customer",
+			"item": [
+				{
+					"name": "Create Customer 1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"pm.environment.set('test_customer_id', jsonData.id);",
+									"pm.environment.set('test_customer_name', pm.request.url.query.get('name'));",
+									"pm.environment.set('test_customer_surname', pm.request.url.query.get('surname'));",
+									"",
+									"pm.test(\"Status code is 201\", function() {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has correct fields\", function() {",
+									"    pm.expect(jsonData).to.have.all.keys(",
+									"        'id',",
+									"        'name',",
+									"        'surname',",
+									"        'photo_url',",
+									"        'created_by',",
+									"        'last_updated_by'",
+									"        );",
+									"    pm.expect(jsonData.created_by).to.have.all.keys('id', 'user_name');",
+									"    pm.expect(jsonData.last_updated_by).to.have.all.keys('id', 'user_name');",
+									"});",
+									"",
+									"pm.test(\"Response has correct values\", function() {",
+									"    pm.expect(jsonData.id > 0);",
+									"    pm.expect(jsonData.name == pm.environment.test_customer_name);",
+									"    pm.expect(jsonData.surname == pm.environment.test_customer_surname);",
+									"    pm.expect(jsonData.photo_url == pm.environment.test_customer_photoURL);",
+									"    pm.expect(jsonData.created_by.id == pm.environment.test_user_id);",
+									"    pm.expect(jsonData.created_by.user_name == pm.environment.test_user_name);",
+									"    pm.expect(jsonData.last_updated_by.id == pm.environment.test_user_id);",
+									"    pm.expect(jsonData.last_updated_by.user_name == pm.environment.test_user_name);",
+									"});",
+									"",
+									"pm.test(\"Photo URL is served\", function() {",
+									"    const photoResponse = pm.sendRequest(jsonData.photo_url);",
+									"    pm.expect(photoResponse.status == 200);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/customers?name={{$randomFirstName}}&surname={{$randomLastName}}&photoURL={{test_customer_photoURL}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"customers"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "{{$randomFirstName}}"
+								},
+								{
+									"key": "surname",
+									"value": "{{$randomLastName}}"
+								},
+								{
+									"key": "photoURL",
+									"value": "{{test_customer_photoURL}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Customer 2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"pm.environment.set('test_customer_id', jsonData.id);",
+									"pm.environment.set('test_customer_name', pm.request.url.query.get('name'));",
+									"pm.environment.set('test_customer_surname', pm.request.url.query.get('surname'));",
+									"",
+									"pm.test(\"Status code is 201\", function() {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has correct fields\", function() {",
+									"    pm.expect(jsonData).to.have.all.keys(",
+									"        'id',",
+									"        'name',",
+									"        'surname',",
+									"        'photo_url',",
+									"        'created_by',",
+									"        'last_updated_by'",
+									"        );",
+									"    pm.expect(jsonData.created_by).to.have.all.keys('id', 'user_name');",
+									"    pm.expect(jsonData.last_updated_by).to.have.all.keys('id', 'user_name');",
+									"});",
+									"",
+									"pm.test(\"Response has correct values\", function() {",
+									"    pm.expect(jsonData.id > 0);",
+									"    pm.expect(jsonData.name == pm.environment.test_customer_name);",
+									"    pm.expect(jsonData.surname == pm.environment.test_customer_surname);",
+									"    pm.expect(jsonData.created_by.id == pm.environment.test_user_id);",
+									"    pm.expect(jsonData.created_by.user_name == pm.environment.test_user_name);",
+									"    pm.expect(jsonData.last_updated_by.id == pm.environment.test_user_id);",
+									"    pm.expect(jsonData.last_updated_by.user_name == pm.environment.test_user_name);",
+									"});",
+									"",
+									"pm.test(\"Photo URL is served\", function() {",
+									"    const photoResponse = pm.sendRequest(jsonData.photo_url);",
+									"    pm.expect(photoResponse.status == 200);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/samuel/devl/crmapi/tests/files/alan_turing.jpeg"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/customers?name={{$randomFirstName}}&surname={{$randomLastName}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"customers"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "{{$randomFirstName}}"
+								},
+								{
+									"key": "surname",
+									"value": "{{$randomLastName}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Customer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"pm.environment.set('test_customer_name', pm.request.url.query.get('name'));",
+									"pm.environment.set('test_customer_surname', pm.request.url.query.get('surname'));",
+									"",
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has correct fields\", function() {",
+									"    pm.expect(jsonData).to.have.all.keys(",
+									"        'id',",
+									"        'name',",
+									"        'surname',",
+									"        'photo_url',",
+									"        'created_by',",
+									"        'last_updated_by'",
+									"        );",
+									"    pm.expect(jsonData.created_by).to.have.all.keys('id', 'user_name');",
+									"    pm.expect(jsonData.last_updated_by).to.have.all.keys('id', 'user_name');",
+									"});",
+									"",
+									"pm.test(\"Response has correct values\", function() {",
+									"    pm.expect(jsonData.id == pm.environment.test_customer_id);",
+									"    pm.expect(jsonData.name == pm.environment.test_customer_name);",
+									"    pm.expect(jsonData.surname == pm.environment.test_customer_surname);",
+									"    pm.expect(jsonData.created_by.id == pm.environment.test_user_id);",
+									"    pm.expect(jsonData.created_by.user_name == pm.environment.test_user_name);",
+									"    pm.expect(jsonData.last_updated_by.id == pm.environment.test_user_id);",
+									"    pm.expect(jsonData.last_updated_by.user_name == pm.environment.test_user_name);",
+									"});",
+									"",
+									"pm.test(\"Photo URL is served\", function() {",
+									"    const photoResponse = pm.sendRequest(jsonData.photo_url);",
+									"    pm.expect(photoResponse.status == 200);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/samuel/devl/crmapi/tests/files/alan_turing.jpeg"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/customers/{{test_customer_id}}?name={{$randomFirstName}}&surname={{$randomLastName}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"customers",
+								"{{test_customer_id}}"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "{{$randomFirstName}}"
+								},
+								{
+									"key": "surname",
+									"value": "{{$randomLastName}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has correct fields\", function() {",
+									"    pm.expect(jsonData).to.have.all.keys(",
+									"        'id',",
+									"        'name',",
+									"        'surname',",
+									"        'photo_url',",
+									"        'created_by',",
+									"        'last_updated_by'",
+									"        );",
+									"    pm.expect(jsonData.created_by).to.have.all.keys('id', 'user_name');",
+									"    pm.expect(jsonData.last_updated_by).to.have.all.keys('id', 'user_name');",
+									"});",
+									"",
+									"pm.test(\"Response has correct values\", function() {",
+									"    pm.expect(jsonData.id == pm.environment.test_customer_id);",
+									"    pm.expect(jsonData.name == pm.environment.test_customer_name);",
+									"    pm.expect(jsonData.surname == pm.environment.test_customer_surname);",
+									"    pm.expect(jsonData.created_by.id == pm.environment.test_user_id);",
+									"    pm.expect(jsonData.created_by.user_name == pm.environment.test_user_name);",
+									"    pm.expect(jsonData.last_updated_by.id == pm.environment.test_user_id);",
+									"    pm.expect(jsonData.last_updated_by.user_name == pm.environment.test_user_name);",
+									"});",
+									"",
+									"pm.test(\"Photo URL is served\", function() {",
+									"    const photoResponse = pm.sendRequest(jsonData.photo_url);",
+									"    pm.expect(photoResponse.status == 200);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/customers/{{test_customer_id}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"customers",
+								"{{test_customer_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customers 1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has correct fields\", function() {",
+									"    pm.expect(jsonData[0]).to.have.all.keys(",
+									"        'id',",
+									"        'name',",
+									"        'surname',",
+									"        'photo_url',",
+									"        'created_by',",
+									"        'last_updated_by'",
+									"        );",
+									"    pm.expect(jsonData[0].created_by).to.have.all.keys('id', 'user_name');",
+									"    pm.expect(jsonData[0].last_updated_by).to.have.all.keys('id', 'user_name');",
+									"});",
+									"",
+									"pm.test(\"Response has correct values\", function() {",
+									"    pm.expect(jsonData.length == 1);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/customers?per_page=1&page=1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"customers"
+							],
+							"query": [
+								{
+									"key": "per_page",
+									"value": "1"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customers 2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has correct fields\", function() {",
+									"    pm.expect(jsonData[1]).to.have.all.keys(",
+									"        'id',",
+									"        'name',",
+									"        'surname',",
+									"        'photo_url',",
+									"        'created_by',",
+									"        'last_updated_by'",
+									"        );",
+									"    pm.expect(jsonData[1].created_by).to.have.all.keys('id', 'user_name');",
+									"    pm.expect(jsonData[1].last_updated_by).to.have.all.keys('id', 'user_name');",
+									"});",
+									"",
+									"pm.test(\"Response has correct values\", function() {",
+									"    pm.expect(jsonData.length == 2);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/customers?per_page=2&page=1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"customers"
+							],
+							"query": [
+								{
+									"key": "per_page",
+									"value": "2"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Customer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function() {",
+									"    pm.response.to.have.status(204);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/customers/{{test_customer_id}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"customers",
+								"{{test_customer_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customer After Delete",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"pm.test(\"Status code is 400\", function() {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/customers/{{test_customer_id}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"customers",
+								"{{test_customer_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{admin_access_token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Security checks",
+			"item": [
+				{
+					"name": "Get request",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has correct Content-Type header\", function() {",
+									"    pm.expect(pm.response.headers.get('Content-Type') == 'application/json');",
+									"});",
+									"",
+									"pm.test(\"Response has correct X-Content-Type-Options header\", function() {",
+									"pm.expect(pm.response.headers.get('X-Content-Type-Options') == 'nosniff');",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/users/{{test_user_id}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"users",
+								"{{test_user_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{admin_access_token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "User stage 2",
+			"item": [
+				{
+					"name": "Delete User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function() {",
+									"    pm.response.to.have.status(204);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/users/{{test_user_id}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"users",
+								"{{test_user_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function() {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/users/{{test_user_id}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"users",
+								"{{test_user_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{admin_access_token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
 				}
 			]
 		}
