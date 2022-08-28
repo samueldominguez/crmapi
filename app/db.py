@@ -24,7 +24,7 @@ def init_db():
     import app.models
     Base.metadata.create_all(bind=engine)
     # Check if the database already has content
-    # Create roles
+    # Create roles/scopes
     admin_role = app.models.Role('admin')
     wizard_role = app.models.Role('wizard')
     db_session.add(admin_role, wizard_role)
@@ -33,12 +33,24 @@ def init_db():
     marduk = app.models.User('marduk', marduk_password,
                              name='Marduk', surname='Babylonian', roles=[admin_role, wizard_role])
     db_session.add(marduk)
+
+    # Create pregenerated client
+
+    # First the grants
+    basic_grant = app.models.OAuth2Grant('password')
+    refresh_token_grant = app.models.OAuth2Grant('refresh_token')
+    db_session.add(basic_grant)
+    db_session.add(refresh_token_grant)
+
+    pregen_client = app.models.OAuth2Client(config.OAUTH2_PREGEN_CLIENT_ID, [
+                                            admin_role, wizard_role], [basic_grant, refresh_token_grant])
+    db_session.add(pregen_client)
+
     if ENV == 'DEV':
         human = app.models.User('human', 'earth',
-                                name='Human', surname='Earthling', administrator=False, roles=[wizard_role])
+                                name='Human', surname='Earthling', roles=[wizard_role])
 
         db_session.add(human)
-    logging.info("Created some stuff son")
     db_session.commit()
 
 
